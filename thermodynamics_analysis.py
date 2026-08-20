@@ -5,9 +5,13 @@ from scipy.stats import linregress
 #calculate line of best fit
 #enthaly = m*-R(8.31 gas constant)
 #entropy= y intercept * R
+import os
+
 # use the main equation to find if the reaction is spontaneous (rmember : negative means spontaneous(opposite of what u usually think))
 
-df = pd.read_csv('/Users/luckshitg.n/science project/final_thermodynamics_data.csv')
+script_dir = os.path.dirname(os.path.abspath(__file__))
+data_path = os.path.join(script_dir, 'final_thermodynamics_data.csv')
+df = pd.read_csv(data_path)
 T = df['temp_K'].values
 C_e = df['ce_mg_L'].values
 q_e = df['qe_mg_g'].values
@@ -56,6 +60,6 @@ plt.legend()
 plt.grid(True, linestyle='--', alpha=0.7)
 
 
-plot_path = '/Users/luckshitg.n/.gemini/antigravity-ide/brain/23b42a47-30b1-43a9-9b17-1e4b81d498ad/thermodynamics_plot.png'
+plot_path = os.path.join(script_dir, 'thermodynamics_plot.png')
 plt.savefig(plot_path, dpi=300, bbox_inches='tight')
 print(f"\nPlot saved to: {plot_path}")

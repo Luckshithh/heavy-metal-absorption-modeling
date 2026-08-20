@@ -2,10 +2,12 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 #curve fit is used to find the constants
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fitimport os
 
 ## Applying non-linear regression for plotting equilibrium concentration (Ce) vs adsorption capacity (qe)
-df = pd.read_csv('/Users/luckshitg.n/science project/final_isotherm_data.csv')
+script_dir = os.path.dirname(os.path.abspath(__file__))
+data_path = os.path.join(script_dir, 'final_isotherm_data.csv')
+df = pd.read_csv(data_path)
 C_e = df['ce_mg_L'].values
 q_e = df['qe_mg_g'].values
 
@@ -57,6 +59,6 @@ plt.legend()
 plt.grid(True, linestyle='--', alpha=0.7)
 
 
-plot_path = '/Users/luckshitg.n/.gemini/antigravity-ide/brain/23b42a47-30b1-43a9-9b17-1e4b81d498ad/isotherm_plot.png'
+plot_path = os.path.join(script_dir, 'isotherm_plot.png')
 plt.savefig(plot_path, dpi=300, bbox_inches='tight')
 print(f"\nPlot saved to: {plot_path}")

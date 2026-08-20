@@ -6,8 +6,12 @@ from scipy.optimize import curve_fit
 # trying to test which algorithm is better at modelling the data.
 # The Pseudo-first-order (PFO) model says they both are held together through physical forces.
 # The Pseudo-second-order (PSO) model says they both are held together through chemical bonding.
+import os
+
 #use scipy curve fit function to model both pseudo first order and pseudo second order and plot them on the same graph to see which one is better
-df = pd.read_csv('/Users/luckshitg.n/science project/final_kinetics_data.csv')
+script_dir = os.path.dirname(os.path.abspath(__file__))
+data_path = os.path.join(script_dir, 'final_kinetics_data.csv')
+df = pd.read_csv(data_path)
 t = df['time_min'].values
 q_t = df['qt_mg_g'].values
 
@@ -56,6 +60,6 @@ plt.title('Adsorption Kinetics')
 plt.legend()
 plt.grid(True, linestyle='--', alpha=0.7)
 
-plot_path = '/Users/luckshitg.n/.gemini/antigravity-ide/brain/23b42a47-30b1-43a9-9b17-1e4b81d498ad/kinetics_plot.png'
+plot_path = os.path.join(script_dir, 'kinetics_plot.png')
 plt.savefig(plot_path, dpi=300, bbox_inches='tight')
 print(f"\nPlot saved to: {plot_path}")
