@@ -10,7 +10,7 @@ import os
 # use the main equation to find if the reaction is spontaneous (rmember : negative means spontaneous(opposite of what u usually think))
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-data_path = os.path.join(script_dir, 'final_thermodynamics_data.csv')
+data_path = os.path.join(script_dir, "..", "data", 'final_thermodynamics_data.csv')
 df = pd.read_csv(data_path)
 T = df['temp_K'].values
 C_e = df['ce_mg_L'].values
@@ -60,6 +60,6 @@ plt.legend()
 plt.grid(True, linestyle='--', alpha=0.7)
 
 
-plot_path = os.path.join(script_dir, 'thermodynamics_plot.png')
+plot_path = os.path.join(script_dir, "..", "plots" 'thermodynamics_plot.png')
 plt.savefig(plot_path, dpi=300, bbox_inches='tight')
 print(f"\nPlot saved to: {plot_path}")
