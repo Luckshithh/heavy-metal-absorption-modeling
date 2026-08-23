@@ -6,7 +6,7 @@ from scipy.optimize import curve_fitimport os
 
 ## Applying non-linear regression for plotting equilibrium concentration (Ce) vs adsorption capacity (qe)
 script_dir = os.path.dirname(os.path.abspath(__file__))
-data_path = os.path.join(script_dir,"..","data", 'final_isotherm_data.csv')
+data_path = os.path.join(script_dir, "..", "data", "final data", "final_isotherm_data.csv")
 df = pd.read_csv(data_path)
 C_e = df['ce_mg_L'].values
 q_e = df['qe_mg_g'].values
@@ -59,6 +59,8 @@ plt.legend()
 plt.grid(True, linestyle='--', alpha=0.7)
 
 
-plot_path = os.path.join(script_dir, "..", "plots", 'isotherm_plot.png')
+plots_dir = os.path.join(script_dir, "..", "plots")
+os.makedirs(plots_dir, exist_ok=True)
+plot_path = os.path.join(plots_dir, "isotherm_plot.png")
 plt.savefig(plot_path, dpi=300, bbox_inches='tight')
 print(f"\nPlot saved to: {plot_path}")

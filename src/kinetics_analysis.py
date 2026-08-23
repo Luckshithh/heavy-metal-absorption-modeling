@@ -10,7 +10,7 @@ import os
 
 #use scipy curve fit function to model both pseudo first order and pseudo second order and plot them on the same graph to see which one is better
 script_dir = os.path.dirname(os.path.abspath(__file__))
-data_path = os.path.join(script_dir, "..", "data", 'final_kinetics_data.csv')
+data_path = os.path.join(script_dir, "..", "data", "final data", "final_kinetics_data.csv")
 df = pd.read_csv(data_path)
 t = df['time_min'].values
 q_t = df['qt_mg_g'].values
@@ -60,6 +60,8 @@ plt.title('Adsorption Kinetics')
 plt.legend()
 plt.grid(True, linestyle='--', alpha=0.7)
 
-plot_path = os.path.join(script_dir, "..", "plots", 'kinetics_plot.png')
+plots_dir = os.path.join(script_dir, "..", "plots")
+os.makedirs(plots_dir, exist_ok=True)
+plot_path = os.path.join(plots_dir, "kinetics_plot.png")
 plt.savefig(plot_path, dpi=300, bbox_inches='tight')
 print(f"\nPlot saved to: {plot_path}")
