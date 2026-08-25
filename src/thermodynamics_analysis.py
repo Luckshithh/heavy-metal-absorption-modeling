@@ -1,67 +1,71 @@
-import pandas as pd
+import os
 import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from scipy.stats import linregress
-#calculate line of best fit
-#enthaly = m*-R(8.31 gas constant)
-#entropy= y intercept * R
-import os
 
-# use the main equation to find if the reaction is spontaneous (rmember : negative means spontaneous(opposite of what u usually think))
+my_path = os.path.dirname(os.path.abspath(__file__))
+csv_loc = os.path.join(my_path, "..", "data", "final data", "final_thermodynamics_data.csv")
+raw_data = pd.read_csv(csv_loc)
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
-data_path = os.path.join(script_dir, "..", "data", "final data", "final_thermodynamics_data.csv")
-df = pd.read_csv(data_path)
-T = df['temp_K'].values
-C_e = df['ce_mg_L'].values
-q_e = df['qe_mg_g'].values
+temp_k = raw_data['temp_K'].values
+c_eq = raw_data['ce_mg_L'].values
+q_eq = raw_data['qe_mg_g'].values
 
+kd_ratio = q_eq / c_eq
+recip_t = 1 / temp_k
+log_kd = np.log(kd_ratio)
 
-K_d = q_e / C_e
-inv_T = 1 / T
-ln_Kd = np.log(K_d)
+m_slope, c_intercept, r_val, p_val, std_err = linregress(recip_t, log_kd)
+r_gas = 8.314
 
+sample_n = len(recip_t)
+x_mean = np.mean(recip_t)
+dev_x = np.sum((recip_t - x_mean) ** 2)
+dev_y = log_kd - (m_slope * recip_t + c_intercept)
+ss_residuals = np.sum(dev_y ** 2)
+se_regression = np.sqrt(ss_residuals / (sample_n - 2))
+m_error = se_regression / np.sqrt(dev_x)
+c_error = se_regression * np.sqrt(1/sample_n + (x_mean**2 / dev_x))
 
-slope, intercept, r_value, p_value, std_err = linregress(inv_T, ln_Kd)
+h_delta = -m_slope * r_gas / 1000
+h_error = m_error * r_gas / 1000
 
+s_delta = c_intercept * r_gas
+s_error = c_error * r_gas
 
-R = 8.314 
-dH = -slope * R / 1000 
-dS = intercept * R 
+g_delta = h_delta - temp_k * (s_delta / 1000)
+g_error = np.sqrt((h_error) ** 2 + (temp_k * s_error / 1000) ** 2)
 
-
-dG = dH - T * (dS / 1000)
-
-
-print("Thermodynamic Parameters Summary")
-print("-" * 65)
-print(f"Delta H (kJ/mol): {dH:.4f}")
-print(f"Delta S (J/mol*K): {dS:.4f}")
-print("-" * 65)
-print(f"{'T (K)':<10} | {'Delta G (kJ/mol)':<20}")
-print("-" * 35)
-for t_val, dg_val in zip(T, dG):
-    print(f"{t_val:<10} | {dg_val:<20.4f}")
-print("-" * 65)
-
+print("\n" + "=" * 75)
+print("             ADVANCED THERMODYNAMICS PARAMETERS ANALYSIS             ")
+print("=" * 75)
+print(f"  - Standard Enthalpy ($\Delta H^0$) : {h_delta:.4f} ± {h_error:.4f} kJ/mol")
+print(f"  - Standard Entropy ($\Delta S^0$)  : {s_delta:.4f} ± {s_error:.4f} J/mol*K")
+print("-" * 75)
+print(f"{'Temperature (K)':<18} | {'Gibbs Free Energy ($\Delta G^0$) (kJ/mol)':<40}")
+print("-" * 75)
+for t_v, g_v, g_err_v in zip(temp_k, g_delta, g_error):
+    print(f"{t_v:<18.2f} | {g_v:<8.4f} ± {g_err_v:<8.4f}")
+print("=" * 75 + "\n")
 
 plt.figure(figsize=(8, 6))
-plt.scatter(inv_T, ln_Kd, color='black', label='Experimental Data', zorder=5)
+plt.scatter(recip_t, log_kd, color='black', marker='o', s=60, label='Experimental Data', zorder=5)
 
+x_grid = np.linspace(recip_t.min() * 0.95, recip_t.max() * 1.05, 100)
+y_pred = m_slope * x_grid + c_intercept
+plt.plot(x_grid, y_pred, 'r-', linewidth=2, label=f'Linear Fit ($R^2 = {r_val**2:.4f}$)')
 
-inv_T_smooth = np.linspace(min(inv_T)*0.95, max(inv_T)*1.05, 100)
-ln_Kd_pred = slope * inv_T_smooth + intercept
-plt.plot(inv_T_smooth, ln_Kd_pred, 'r-', label=f'Linear Fit ($R^2 = {r_value**2:.4f}$)')
+plt.xlabel('Reciprocal Temperature, $1/T$ (K$^{-1}$)', fontsize=11)
+plt.ylabel('Logarithm of Distribution Coefficient, $\ln(K_d)$', fontsize=11)
+plt.title("Van 't Hoff Linear Regression Fit", fontsize=12, fontweight='bold')
+plt.legend(frameon=True, facecolor='white', edgecolor='none')
+plt.grid(True, linestyle='--', alpha=0.5)
 
-plt.xlabel('1/T (K$^{-1}$)')
-plt.ylabel('ln($K_d$)')
-plt.title("Van 't Hoff Plot")
-plt.legend()
-plt.grid(True, linestyle='--', alpha=0.7)
-
-
-plots_dir = os.path.join(script_dir, "..", "plots")
-os.makedirs(plots_dir, exist_ok=True)
-plot_path = os.path.join(plots_dir, "thermodynamics_plot.png")
-plt.savefig(plot_path, dpi=300, bbox_inches='tight')
-print(f"\nPlot saved to: {plot_path}")
+out_folder = os.path.join(my_path, "..", "plots")
+os.makedirs(out_folder, exist_ok=True)
+img_dest = os.path.join(out_folder, "thermodynamics_plot.png")
+plt.savefig(img_dest, dpi=300, bbox_inches='tight')
+print(f"Successfully generated and saved publication-quality plot to: {img_dest}\n")

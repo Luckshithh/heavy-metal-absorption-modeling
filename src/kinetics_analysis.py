@@ -1,67 +1,81 @@
-import pandas as pd
+import os
 import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
-# trying to test which algorithm is better at modelling the data.
-# The Pseudo-first-order (PFO) model says they both are held together through physical forces.
-# The Pseudo-second-order (PSO) model says they both are held together through chemical bonding.
-import os
+my_path = os.path.dirname(os.path.abspath(__file__))
+csv_loc = os.path.join(my_path, "..", "data", "final data", "final_kinetics_data.csv")
+raw_data = pd.read_csv(csv_loc)
 
-#use scipy curve fit function to model both pseudo first order and pseudo second order and plot them on the same graph to see which one is better
-script_dir = os.path.dirname(os.path.abspath(__file__))
-data_path = os.path.join(script_dir, "..", "data", "final data", "final_kinetics_data.csv")
-df = pd.read_csv(data_path)
-t = df['time_min'].values
-q_t = df['qt_mg_g'].values
+time_pts = raw_data['time_min'].values
+qt_vals = raw_data['qt_mg_g'].values
 
-def pfo_model(t, q_e, k_1):
-    return q_e * (1 - np.exp(-k_1 * t))
+def first_order(t, q_eq, rate1):
+    return q_eq * (1 - np.exp(-rate1 * t))
 
-def pso_model(t, q_e, k_2):
-    return (k_2 * (q_e**2) * t) / (1 + k_2 * q_e * t)
+def second_order(t, q_eq, rate2):
+    return (rate2 * (q_eq**2) * t) / (1 + rate2 * q_eq * t)
 
+fit_1st, cov_1st = curve_fit(first_order, time_pts, qt_vals, p0=[max(qt_vals), 0.1], maxfev=10000)
+qe_1st, k1_rate = fit_1st
+err_1st = np.sqrt(np.diag(cov_1st))
+qe1_err, k1_err = err_1st
+pred_1st = first_order(time_pts, qe_1st, k1_rate)
 
-popt_pfo, _ = curve_fit(pfo_model, t, q_t, p0=[max(q_t), 0.1], maxfev=10000)
-q_e_pfo, k_1 = popt_pfo
-q_t_pred_pfo = pfo_model(t, q_e_pfo, k_1)
+fit_2nd, cov_2nd = curve_fit(second_order, time_pts, qt_vals, p0=[max(qt_vals), 0.01], maxfev=10000)
+qe_2nd, k2_rate = fit_2nd
+err_2nd = np.sqrt(np.diag(cov_2nd))
+qe2_err, k2_err = err_2nd
+pred_2nd = second_order(time_pts, qe_2nd, k2_rate)
 
+def compute_goodness(y_real, y_model, p_count=2):
+    total_n = len(y_real)
+    residual_ss = np.sum((y_real - y_model) ** 2)
+    total_ss = np.sum((y_real - np.mean(y_real)) ** 2)
+    r_sq = 1 - (residual_ss / total_ss)
+    adjusted_r = 1 - ((1 - r_sq) * (total_n - 1) / (total_n - p_count - 1))
+    chi_val = np.sum(((y_real - y_model) ** 2) / (y_model + 1e-10))
+    return r_sq, adjusted_r, chi_val
 
-popt_pso, _ = curve_fit(pso_model, t, q_t, p0=[max(q_t), 0.01], maxfev=10000)
-q_e_pso, k_2 = popt_pso
-q_t_pred_pso = pso_model(t, q_e_pso, k_2)
+r2_1, adj_1, chi_1 = compute_goodness(qt_vals, pred_1st)
+r2_2, adj_2, chi_2 = compute_goodness(qt_vals, pred_2nd)
 
-
-def calc_r2(y_true, y_pred):
-    ss_res = np.sum((y_true - y_pred)**2)
-    ss_tot = np.sum((y_true - np.mean(y_true))**2)
-    return 1 - (ss_res / ss_tot)
-
-r2_pfo = calc_r2(q_t, q_t_pred_pfo)
-r2_pso = calc_r2(q_t, q_t_pred_pso)
-
-
-print(f"{'Model':<10} | {'q_e (mg/g)':<12} | {'k':<15} | {'R^2':<10}")
-print("-" * 55)
-print(f"{'PFO':<10} | {q_e_pfo:<12.4f} | {k_1:<15.4e} | {r2_pfo:<10.4f}")
-print(f"{'PSO':<10} | {q_e_pso:<12.4f} | {k_2:<15.4e} | {r2_pso:<10.4f}")
-
+print("\n" + "=" * 75)
+print("             ADVANCED ADSORPTION KINETICS ANALYSIS SUMMARY             ")
+print("=" * 75)
+print("PSEUDO-FIRST-ORDER MODEL (Physisorption Dominant):")
+print(f"  - Equil. Capacity Prediction (q_e)  : {qe_1st:.4f} ± {qe1_err:.4f} mg/g")
+print(f"  - Adsorption Rate Constant (k_1)    : {k1_rate:.4e} ± {k1_err:.4e} min^-1")
+print(f"  - Coefficient of Determination (R^2): {r2_1:.4f}")
+print(f"  - Adjusted R-Squared (Adj R^2)      : {adj_1:.4f}")
+print(f"  - Chi-Squared (X^2) Goodness-of-Fit : {chi_1:.4f}")
+print("-" * 75)
+print("PSEUDO-SECOND-ORDER MODEL (Chemisorption Dominant):")
+print(f"  - Equil. Capacity Prediction (q_e)  : {qe_2nd:.4f} ± {qe2_err:.4f} mg/g")
+print(f"  - Adsorption Rate Constant (k_2)    : {k2_rate:.4e} ± {k2_err:.4e} g/mg*min")
+print(f"  - Coefficient of Determination (R^2): {r2_2:.4f}")
+print(f"  - Adjusted R-Squared (Adj R^2)      : {adj_2:.4f}")
+print(f"  - Chi-Squared (X^2) Goodness-of-Fit : {chi_2:.4f}")
+print("=" * 75 + "\n")
 
 plt.figure(figsize=(8, 6))
-plt.scatter(t, q_t, color='black', label='Experimental Data', zorder=5)
+plt.scatter(time_pts, qt_vals, color='black', marker='o', s=60, label='Experimental Data', zorder=5)
 
-t_smooth = np.linspace(0, max(t) + 10, 100)
-plt.plot(t_smooth, pfo_model(t_smooth, q_e_pfo, k_1), 'b--', label='PFO Model')
-plt.plot(t_smooth, pso_model(t_smooth, q_e_pso, k_2), 'r-', label='PSO Model')
+t_grid = np.linspace(0, max(time_pts) * 1.1, 200)
+plt.plot(t_grid, first_order(t_grid, qe_1st, k1_rate), 'b--', linewidth=2, label=f'PFO Fit ($R^2_{{adj}} = {adj_1:.3f}$)')
+plt.plot(t_grid, second_order(t_grid, qe_2nd, k2_rate), 'r-', linewidth=2, label=f'PSO Fit ($R^2_{{adj}} = {adj_2:.3f}$)')
 
-plt.xlabel('Time (min)')
-plt.ylabel('Amount Adsorbed (mg/g)')
-plt.title('Adsorption Kinetics')
-plt.legend()
-plt.grid(True, linestyle='--', alpha=0.7)
+plt.xlabel('Contact Time, $t$ (min)', fontsize=11)
+plt.ylabel('Adsorption Capacity over time, $q_t$ (mg/g)', fontsize=11)
+plt.title('Non-Linear Adsorption Kinetics of Pb(II)', fontsize=12, fontweight='bold')
+plt.legend(frameon=True, facecolor='white', edgecolor='none')
+plt.grid(True, linestyle='--', alpha=0.5)
 
-plots_dir = os.path.join(script_dir, "..", "plots")
-os.makedirs(plots_dir, exist_ok=True)
-plot_path = os.path.join(plots_dir, "kinetics_plot.png")
-plt.savefig(plot_path, dpi=300, bbox_inches='tight')
-print(f"\nPlot saved to: {plot_path}")
+out_folder = os.path.join(my_path, "..", "plots")
+os.makedirs(out_folder, exist_ok=True)
+img_dest = os.path.join(out_folder, "kinetics_plot.png")
+plt.savefig(img_dest, dpi=300, bbox_inches='tight')
+print(f"Successfully generated and saved publication-quality plot to: {img_dest}\n")
