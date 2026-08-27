@@ -6,7 +6,7 @@ I started this project long after hearing a speech from an UNEP MUN conference, 
 
 Experiment Details: 
 
-The entire planning from scientific design, mathematical strategies, data collection and organization and modification(which was quite difficult than I thought it would be) were all performed by me and to execute regressions an coding agent was used alongside an ADE.
+The entire planning from scientific design, mathematical strategies, data collection and organization and modification(which was quite difficult than I thought it would be) were all performed by me and the code was generated using an coding agent was used.
 
 
 1. Kinetic Analysis
