@@ -4,10 +4,6 @@ Overview of this project:-
 
 I started this project long after hearing a speech from an UNEP MUN conference, which talked about dumping toxic metals in water bodies. I really got curious and started researching, this helped me also find out that a lot of these concepts are already covered in my A and AS level syllabus. My research helped me engineer solutions through mathematical modeling for water purification. I used open source data from zenodo and mendeley. this project aims to analyze this data to figure out the actual physical mechanism, maximum capacity and the thermodynamic feasibility (spontaneous or non spontaneous) of using biochar ( which is produced by heated organic waste) to mitigate the effects of Pb(II) contamination in the water bodies.
 
-Experiment Details: 
-
-The entire planning from scientific design, mathematical strategies, data collection and organization and modification(which was quite difficult than I thought it would be) were all performed by me and the code was generated using an coding agent was used.
-
 
 1. Kinetic Analysis
 
