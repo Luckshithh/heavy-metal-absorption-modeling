@@ -3,6 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
+def calculate_rmse(y_actual, y_predicted):
+    return np.sqrt(np.mean((y_actual - y_predicted) ** 2))
+
 # trying to test which algorithm is better at modelling the data.
 # The Pseudo-first-order (PFO) model says they both are held together through physical forces.
 # The Pseudo-second-order (PSO) model says they both are held together through chemical bonding.
@@ -46,20 +49,44 @@ print("-" * 55)
 print(f"{'PFO':<10} | {q_e_pfo:<12.4f} | {k_1:<15.4e} | {r2_pfo:<10.4f}")
 print(f"{'PSO':<10} | {q_e_pso:<12.4f} | {k_2:<15.4e} | {r2_pso:<10.4f}")
 
+rmse_pfo = calculate_rmse(q_t, q_t_pred_pfo)
+rmse_pso = calculate_rmse(q_t, q_t_pred_pso)
 
-plt.figure(figsize=(8, 6))
-plt.scatter(t, q_t, color='black', label='Experimental Data', zorder=5)
+print(f"PFO RMSE: {rmse_pfo:.4f} mg/g")
+print(f"PSO RMSE: {rmse_pso:.4f} mg/g")
 
+
+# Create a 2-panel figure (Top: Fit, Bottom: Residuals)
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8), sharex=True, 
+                             gridspec_kw={'height_ratios': [3, 1]})
+
+# --- TOP PANEL: Kinetics Fit ---
+ax1.scatter(t, q_t, color='black', zorder=5, label='Experimental Data')
 t_smooth = np.linspace(0, max(t) + 10, 100)
-plt.plot(t_smooth, pfo_model(t_smooth, q_e_pfo, k_1), 'b--', label='PFO Model')
-plt.plot(t_smooth, pso_model(t_smooth, q_e_pso, k_2), 'r-', label='PSO Model')
+ax1.plot(t_smooth, pfo_model(t_smooth, q_e_pfo, k_1), label=f'Pseudo-First-Order ($R^2$ = {r2_pfo:.4f}, RMSE = {rmse_pfo:.2f})', color='darkorange', lw=2)
+ax1.plot(t_smooth, pso_model(t_smooth, q_e_pso, k_2), label=f'Pseudo-Second-Order ($R^2$ = {r2_pso:.4f}, RMSE = {rmse_pso:.2f})', color='forestgreen', linestyle='--', lw=2)
+ax1.set_ylabel('Adsorbed Amount, $q_t$ (mg/g)', fontsize=11)
+ax1.set_title('Adsorption Kinetics Modeling & Residual Analysis', fontsize=13, fontweight='bold')
+ax1.legend(loc='lower right', frameon=True)
+ax1.grid(True, linestyle=':', alpha=0.6)
 
-plt.xlabel('Time (min)')
-plt.ylabel('Amount Adsorbed (mg/g)')
-plt.title('Adsorption Kinetics')
-plt.legend()
-plt.grid(True, linestyle='--', alpha=0.7)
+# --- BOTTOM PANEL: Residuals ---
+# Calculate residuals at experimental points
+res_pfo = q_t - q_t_pred_pfo
+res_pso = q_t - q_t_pred_pso
 
+ax2.scatter(t, res_pfo, color='darkorange', marker='o', s=60, label='PFO Residuals')
+ax2.scatter(t, res_pso, color='forestgreen', marker='s', s=60, label='PSO Residuals')
+ax2.axhline(y=0, color='black', linestyle='-', linewidth=1.5, alpha=0.7)  # Zero-error baseline
+ax2.set_xlabel('Time, $t$ (min)', fontsize=11)
+ax2.set_ylabel('Residual (mg/g)', fontsize=11)
+ax2.grid(True, linestyle=':', alpha=0.6)
+ax2.set_ylim(-max(abs(np.concatenate([res_pfo, res_pso]))) * 1.5, 
+             max(abs(np.concatenate([res_pfo, res_pso]))) * 1.5)
+
+# Adjust layout and save
+plt.tight_layout()
 plot_path = os.path.join(script_dir, 'kinetics_plot.png')
-plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+plt.savefig(plot_path, dpi=300)
+plt.close()
 print(f"\nPlot saved to: {plot_path}")

@@ -2,7 +2,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 #curve fit is used to find the constants
-from scipy.optimize import curve_fitimport os
+from scipy.optimize import curve_fit
+import os
+
+def calculate_rmse(y_actual, y_predicted):
+    return np.sqrt(np.mean((y_actual - y_predicted) ** 2))
 
 ## Applying non-linear regression for plotting equilibrium concentration (Ce) vs adsorption capacity (qe)
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -44,21 +48,44 @@ print(f"Langmuir Model  : q_m = {q_m:.4f} mg/g, K_L = {K_L:.4f} L/mg, R^2 = {r2_
 print(f"Freundlich Model: K_F = {K_F:.4f} (mg/g)/(mg/L)^(1/n), n = {n:.4f}, R^2 = {r2_freundlich:.4f}")
 print("-" * 75)
 
+rmse_langmuir = calculate_rmse(q_e, q_e_pred_langmuir)
+rmse_freundlich = calculate_rmse(q_e, q_e_pred_freundlich)
 
-plt.figure(figsize=(8, 6))
-plt.scatter(C_e, q_e, color='black', label='Experimental Data', zorder=5)
+print(f"Langmuir RMSE: {rmse_langmuir:.4f} mg/g")
+print(f"Freundlich RMSE: {rmse_freundlich:.4f} mg/g")
 
+
+# Create a 2-panel figure (Top: Fit, Bottom: Residuals)
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8), sharex=True, 
+                             gridspec_kw={'height_ratios': [3, 1]})
+
+# --- TOP PANEL: Experimental Data and Fits ---
+ax1.scatter(C_e, q_e, color='black', zorder=5, label='Experimental Data')
 C_e_smooth = np.linspace(0, max(C_e) * 1.1, 100)
-plt.plot(C_e_smooth, langmuir_model(C_e_smooth, q_m, K_L), 'b--', label='Langmuir Model')
-plt.plot(C_e_smooth, freundlich_model(C_e_smooth, K_F, n), 'r-', label='Freundlich Model')
+ax1.plot(C_e_smooth, langmuir_model(C_e_smooth, q_m, K_L), label=f'Langmuir Fit ($R^2$ = {r2_langmuir:.4f}, RMSE = {rmse_langmuir:.2f})', color='royalblue', lw=2)
+ax1.plot(C_e_smooth, freundlich_model(C_e_smooth, K_F, n), label=f'Freundlich Fit ($R^2$ = {r2_freundlich:.4f}, RMSE = {rmse_freundlich:.2f})', color='crimson', linestyle='--', lw=2)
+ax1.set_ylabel('Adsorption Capacity, $q_e$ (mg/g)', fontsize=11)
+ax1.set_title('Lead Isotherm Modeling & Residual Analysis', fontsize=13, fontweight='bold')
+ax1.legend(loc='lower right', frameon=True)
+ax1.grid(True, linestyle=':', alpha=0.6)
 
-plt.xlabel('Equilibrium Concentration (mg/L)')
-plt.ylabel('Adsorption Capacity (mg/g)')
-plt.title('Adsorption Isotherms')
-plt.legend()
-plt.grid(True, linestyle='--', alpha=0.7)
+# --- BOTTOM PANEL: Residuals ---
+# Calculate residuals at the experimental points
+res_langmuir = q_e - q_e_pred_langmuir
+res_freundlich = q_e - q_e_pred_freundlich
 
+ax2.scatter(C_e, res_langmuir, color='royalblue', marker='o', s=60, label='Langmuir Residuals')
+ax2.scatter(C_e, res_freundlich, color='crimson', marker='s', s=60, label='Freundlich Residuals')
+ax2.axhline(y=0, color='black', linestyle='-', linewidth=1.5, alpha=0.7)  # Zero-error baseline
+ax2.set_xlabel('Equilibrium Concentration, $C_e$ (mg/L)', fontsize=11)
+ax2.set_ylabel('Residual (mg/g)', fontsize=11)
+ax2.grid(True, linestyle=':', alpha=0.6)
+ax2.set_ylim(-max(abs(np.concatenate([res_langmuir, res_freundlich]))) * 1.5, 
+             max(abs(np.concatenate([res_langmuir, res_freundlich]))) * 1.5)
 
+# Adjust layout and save
+plt.tight_layout()
 plot_path = os.path.join(script_dir, 'isotherm_plot.png')
-plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+plt.savefig(plot_path, dpi=300)
+plt.close()
 print(f"\nPlot saved to: {plot_path}")
