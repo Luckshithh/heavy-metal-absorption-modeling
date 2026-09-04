@@ -85,7 +85,7 @@ ax2.set_ylim(-max(abs(np.concatenate([res_langmuir, res_freundlich]))) * 1.5,
 
 # Adjust layout and save
 plt.tight_layout()
-plot_path = os.path.join(script_dir, 'plots', 'isotherm_plot.png')
+plot_path = os.path.join(script_dir, 'plots', 'isotherm_plot_new.png')
 plt.savefig(plot_path, dpi=300)
 plt.close()
 print(f"\nPlot saved to: {plot_path}")
