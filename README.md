@@ -12,13 +12,13 @@ The entire planning from scientific design, mathematical strategies, data collec
 
 I found there were two popular models, PFO(pseudo first order) and PSO (pseudo second order). generating a program to run a non linear regression to the concentration-time values helped me choose between the two models. The PFO model gave me an R squared value closer to one helping me conclude that the Pb(II) ions attached to the biochar through physical forces rather than chemical bonding which was suggested In the PSO model.
 
-![Kinetics Analysis](plots/kinetics_plot.png)
+![Kinetics Analysis](plots/kinetics_plot_new.png)
 
  2. Isothermal Analysis
 
 The equilibrium data was plotted against the Langmuir(uniform surface for biochar) and freundlich(non uniform surface for biochar) isotherm models. The Langmuir model gave an R squared value of 0.9907 which helped me calculate the maximum adsorption capacity using the Langmuir equation which came out to be 128.16 mg/g meaning that a gram of biochar can offset about 128.16mg of lead ions per gram of biochar.
 
-![Isotherm Fitting](plots/isotherm_plot.png)
+![Isotherm Fitting](plots/isotherm_plot_new.png)
 
 
 3. Thermodynamical Analysis:
